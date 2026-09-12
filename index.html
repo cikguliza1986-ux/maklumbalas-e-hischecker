@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soal Selidik Pengaplikasian e-HisChecker dalam PdP</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase SDK untuk HTML tanpa proses build -->
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              800: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      @page { size: A4 portrait; margin: 12mm; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; color: black; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      main { max-width: none !important; width: 100% !important; padding: 0 !important; }
+      #sectionForm { display: none !important; }
+      #sectionAnalytics { display: block !important; }
+      #sectionAnalytics > div, table, tr, #testimonialsList > div { break-inside: avoid; page-break-inside: avoid; }
+    }
+    .tap-highlight {
+      transition: all 0.15s ease-in-out;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Header Navigasi -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs no-print">
+    <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <img src="https://i.postimg.cc/ZKzGDyw1/logo-his-terkini.png" alt="Logo e-HisChecker" class="h-9 w-auto object-contain rounded-md" onerror="this.onerror=null; this.src='https://placehold.co/80x80/2563eb/ffffff?text=e-HC';">
+        <div>
+          <span class="font-extrabold text-sm tracking-tight text-blue-950">e-HisChecker</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">Soal Selidik PdP Guru</span>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
+        <button id="btnTabForm" onclick="switchTab('form')" class="px-3 py-1 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-xs flex items-center space-x-1.5">
+          <i class="fa-solid fa-pen"></i>
+          <span>Isi Borang</span>
+        </button>
+        <button id="btnTabAnalytics" onclick="requestAnalyticsAccess()" class="px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-lock text-amber-500" id="lockIconTab"></i>
+          <span>Dapatan Live</span>
+          <span id="badgeCount" class="bg-blue-600 text-white text-[10px] px-1.5 rounded-full">4</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Kandungan Utama -->
+  <main class="flex-1 max-w-2xl w-full mx-auto p-3.5 sm:p-6 space-y-4">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: BORANG SOAL SELIDIK PANTAS GURU (MESRA MOBILE & CEPAT) -->
+    <!-- ========================================================================= -->
+    <section id="sectionForm" class="space-y-4">
+      
+      <!-- Kad Pengenalan Padat -->
+      <div class="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-md">
+        <div class="flex items-center justify-between gap-3 mb-2">
+          <div class="flex items-center space-x-2 text-xs text-blue-300 font-semibold">
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+            <span>Instrumen Maklum Balas Guru Peserta Taklimat</span>
+          </div>
+          <div class="bg-white/10 p-1.5 rounded-xl backdrop-blur-xs border border-white/15">
+            <img src="https://i.postimg.cc/ZKzGDyw1/logo-his-terkini.png" alt="Logo e-HisChecker" class="h-8 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/80x80/2563eb/ffffff?text=e-HC';">
+          </div>
+        </div>
+        <h1 class="text-base sm:text-lg font-black leading-snug tracking-wide uppercase">
+          SOAL SELIDIK PENGAPLIKASIAN e-HisChecker DALAM PdP
+        </h1>
+        <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Platform Pembelajaran Kendiri dan Pentaksiran Pintar Sejarah STPM. Hanya memerlukan <strong>5 ketikan skor</strong> dan <strong>1 minit</strong> untuk dilengkapkan.
+        </p>
+      </div>
+
+      <!-- Borang Utama -->
+      <form id="fastSurveyForm" onsubmit="handleQuickSubmit(event)" class="space-y-4">
+
+        <!-- Kad 1: Maklumat Ringkas Responden -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-user-check text-blue-600"></i>
+            <span>1. Maklumat Ringkas Cikgu</span>
+          </h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Nama Cikgu <span class="text-red-500">*</span></label>
+              <input type="text" id="respName" required placeholder="Cth: Cikgu Razak / Pn. Mary" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Sekolah / Tempat Bertugas <span class="text-red-500">*</span></label>
+              <input type="text" id="respSchool" required placeholder="Cth: Kolej Tun Datu Tuanku Hj Bujang" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Input Tarikh Taklimat / Penerangan -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Tarikh Mendengar Penerangan <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                  <i class="fa-regular fa-calendar-days"></i>
+                </div>
+                <input type="date" id="respDate" required class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none font-medium text-slate-800 bg-white">
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Daerah <span class="text-red-500">*</span></label>
+              <select id="respDistrict" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none font-medium text-slate-800 bg-white">
+                <option value="Miri" selected>Miri</option>
+                <option value="Asajaya">Asajaya</option>
+                <option value="Bau">Bau</option>
+                <option value="Belaga">Belaga</option>
+                <option value="Beluru">Beluru</option>
+                <option value="Betong">Betong</option>
+                <option value="Bintulu">Bintulu</option>
+                <option value="Bukit Mabong">Bukit Mabong</option>
+                <option value="Dalat">Dalat</option>
+                <option value="Daro">Daro</option>
+                <option value="Gedong">Gedong</option>
+                <option value="Julau">Julau</option>
+                <option value="Kabong">Kabong</option>
+                <option value="Kanowit">Kanowit</option>
+                <option value="Kapit">Kapit</option>
+                <option value="Kuching">Kuching</option>
+                <option value="Lawas">Lawas</option>
+                <option value="Limbang">Limbang</option>
+                <option value="Lingga">Lingga</option>
+                <option value="Lubok Antu">Lubok Antu</option>
+                <option value="Lundu">Lundu</option>
+                <option value="Marudi">Marudi</option>
+                <option value="Matu">Matu</option>
+                <option value="Meradong">Meradong</option>
+                <option value="Mukah">Mukah</option>
+                <option value="Pakan">Pakan</option>
+                <option value="Pantu">Pantu</option>
+                <option value="Pusa">Pusa</option>
+                <option value="Samarahan">Samarahan</option>
+                <option value="Saratok">Saratok</option>
+                <option value="Sarikei">Sarikei</option>
+                <option value="Sebauh">Sebauh</option>
+                <option value="Sebuyau">Sebuyau</option>
+                <option value="Selangau">Selangau</option>
+                <option value="Serian">Serian</option>
+                <option value="Sibu">Sibu</option>
+                <option value="Siburan">Siburan</option>
+                <option value="Simunjan">Simunjan</option>
+                <option value="Song">Song</option>
+                <option value="Spaoh">Spaoh</option>
+                <option value="Sri Aman">Sri Aman</option>
+                <option value="Subis">Subis</option>
+                <option value="Tanjung Manis">Tanjung Manis</option>
+                <option value="Tatau">Tatau</option>
+                <option value="Tebedu">Tebedu</option>
+                <option value="Telang Usan">Telang Usan</option>
+                <option value="Luar Sarawak">Luar Sarawak</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 text-xs">Sesi / Program Taklimat Ini Dihadiri <span class="text-red-500">*</span></label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                <input type="radio" name="respEvent" value="Program PAT" checked onchange="handleEventChange(this.value)" class="text-blue-600">
+                <span class="font-medium text-slate-800">Program PAT</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                <input type="radio" name="respEvent" value="Pameran Inovasi" onchange="handleEventChange(this.value)" class="text-blue-600">
+                <span class="font-medium text-slate-800">Pameran Inovasi</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 col-span-2 sm:col-span-3">
+                <input type="radio" name="respEvent" value="Lain-lain" onchange="handleEventChange(this.value)" class="text-blue-600">
+                <span class="font-medium text-slate-800">Lain-lain Program / Sesi Pembentangan</span>
+              </label>
+            </div>
+            <input type="text" id="respCustomEvent" placeholder="Sila nyatakan nama program / sesi..." class="hidden mt-2 w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none">
+            <div id="patLevelSection" class="mt-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <label class="block font-semibold text-blue-900 mb-2 text-xs">Peringkat Program PAT <span class="text-red-500">*</span></label>
+              <div class="grid grid-cols-3 gap-2 text-xs">
+                <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-blue-200 bg-white cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100"><input type="radio" name="patLevel" value="Sekolah" checked class="text-blue-600"><span class="font-medium">Sekolah</span></label>
+                <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-blue-200 bg-white cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100"><input type="radio" name="patLevel" value="Daerah" class="text-blue-600"><span class="font-medium">Daerah</span></label>
+                <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-blue-200 bg-white cursor-pointer has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100"><input type="radio" name="patLevel" value="Negeri" class="text-blue-600"><span class="font-medium">Negeri</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 text-xs">Kategori Guru / Jawatan <span class="text-red-500">*</span></label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                <input type="radio" name="respRole" value="Guru Sejarah T6" checked class="text-blue-600">
+                <span class="font-medium text-slate-800">Guru Sejarah T6</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                <input type="radio" name="respRole" value="Guru Subjek Lain T6" class="text-blue-600">
+                <span class="font-medium text-slate-800">Subjek Lain T6</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 col-span-2 sm:col-span-1">
+                <input type="radio" name="respRole" value="Pentadbir / Guru Aliran Perdana" class="text-blue-600">
+                <span class="font-medium text-slate-800">Pentadbir / Aliran Perdana</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kad 2: 5 Soalan Teras Penilaian (Skala Likert 1-5) -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1.5">
+              <i class="fa-solid fa-star text-amber-500"></i>
+              <span>2. Penilaian Pandangan Cikgu (Skala 1 - 5)</span>
+            </h2>
+            <span class="text-[10px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded">5 = Sangat Setuju</span>
+          </div>
+
+          <!-- 5 Soalan Teras Inovasi -->
+          <div class="space-y-4 text-xs" id="quickQuestionsContainer">
+            
+            <!-- Soalan 1: Pematuhan Standard STPM -->
+            <div class="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+              <div class="flex items-start space-x-2">
+                <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded text-[11px]">1</span>
+                <p class="font-semibold text-slate-800 leading-snug">
+                  Penerangan jelas membuktikan sistem ini menepati <strong>standard & format peperiksaan sebenar STPM</strong> (Soalan Struktur 4 markah & Esei rubrik PTK).
+                </p>
+              </div>
+              <div class="flex justify-between items-center pt-1 max-w-xs mx-auto">
+                <span class="text-[10px] text-slate-400">Tidak Setuju</span>
+                <div class="flex space-x-1.5">
+                  <button type="button" onclick="setScore('q1', 1)" class="btn-score-q1 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">1</button>
+                  <button type="button" onclick="setScore('q1', 2)" class="btn-score-q1 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">2</button>
+                  <button type="button" onclick="setScore('q1', 3)" class="btn-score-q1 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">3</button>
+                  <button type="button" onclick="setScore('q1', 4)" class="btn-score-q1 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">4</button>
+                  <button type="button" onclick="setScore('q1', 5)" class="btn-score-q1 w-8 h-8 rounded-lg font-bold border-blue-600 bg-blue-600 text-white shadow-xs text-xs">5</button>
+                </div>
+                <span class="text-[10px] text-emerald-600 font-bold">Sangat Setuju</span>
+                <input type="hidden" id="val_q1" value="5">
+              </div>
+            </div>
+
+            <!-- Soalan 2: Butang Latihan Kendiri Pelajar -->
+            <div class="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+              <div class="flex items-start space-x-2">
+                <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded text-[11px]">2</span>
+                <p class="font-semibold text-slate-800 leading-snug">
+                  Ciri <strong>Butang Khas Latihan Kendiri</strong> (pelajar masukkan soalan & jawapan serta disemak AI serta-merta) sangat berkesan memupuk autonomi pembelajaran murid di luar waktu kelas.
+                </p>
+              </div>
+              <div class="flex justify-between items-center pt-1 max-w-xs mx-auto">
+                <span class="text-[10px] text-slate-400">Tidak Setuju</span>
+                <div class="flex space-x-1.5">
+                  <button type="button" onclick="setScore('q2', 1)" class="btn-score-q2 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">1</button>
+                  <button type="button" onclick="setScore('q2', 2)" class="btn-score-q2 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">2</button>
+                  <button type="button" onclick="setScore('q2', 3)" class="btn-score-q2 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">3</button>
+                  <button type="button" onclick="setScore('q2', 4)" class="btn-score-q2 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">4</button>
+                  <button type="button" onclick="setScore('q2', 5)" class="btn-score-q2 w-8 h-8 rounded-lg font-bold border-blue-600 bg-blue-600 text-white shadow-xs text-xs">5</button>
+                </div>
+                <span class="text-[10px] text-emerald-600 font-bold">Sangat Setuju</span>
+                <input type="hidden" id="val_q2" value="5">
+              </div>
+            </div>
+
+            <!-- Soalan 3: Mod Tugasan Guru & Human-in-the-Loop -->
+            <div class="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+              <div class="flex items-start space-x-2">
+                <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded text-[11px]">3</span>
+                <p class="font-semibold text-slate-800 leading-snug">
+                  Aliran kerja di mana <strong>guru hantar tugasan (Mod Latihan/Peperiksaan), AI semak awal dan guru sahkan markah (HITL)</strong> praktikal dan mampu menjimatkan masa menanda guru sekurang-kurangnya 50%.
+                </p>
+              </div>
+              <div class="flex justify-between items-center pt-1 max-w-xs mx-auto">
+                <span class="text-[10px] text-slate-400">Tidak Setuju</span>
+                <div class="flex space-x-1.5">
+                  <button type="button" onclick="setScore('q3', 1)" class="btn-score-q3 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">1</button>
+                  <button type="button" onclick="setScore('q3', 2)" class="btn-score-q3 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">2</button>
+                  <button type="button" onclick="setScore('q3', 3)" class="btn-score-q3 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">3</button>
+                  <button type="button" onclick="setScore('q3', 4)" class="btn-score-q3 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">4</button>
+                  <button type="button" onclick="setScore('q3', 5)" class="btn-score-q3 w-8 h-8 rounded-lg font-bold border-blue-600 bg-blue-600 text-white shadow-xs text-xs">5</button>
+                </div>
+                <span class="text-[10px] text-emerald-600 font-bold">Sangat Setuju</span>
+                <input type="hidden" id="val_q3" value="5">
+              </div>
+            </div>
+
+            <!-- Soalan 4: Laporan Keseluruhan PDF 1 Klik & Cadangan Intervensi Pintar -->
+            <div class="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+              <div class="flex items-start space-x-2">
+                <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded text-[11px]">4</span>
+                <p class="font-semibold text-slate-800 leading-snug">
+                  Fungsi <strong>laporan keseluruhan kelas dalam fail PDF satu klik</strong> dan <strong>cadangan intervensi pintar</strong> (Terbaik, Sederhana, Lemah) sangat membantu pengurusan akademik berasaskan data.
+                </p>
+              </div>
+              <div class="flex justify-between items-center pt-1 max-w-xs mx-auto">
+                <span class="text-[10px] text-slate-400">Tidak Setuju</span>
+                <div class="flex space-x-1.5">
+                  <button type="button" onclick="setScore('q4', 1)" class="btn-score-q4 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">1</button>
+                  <button type="button" onclick="setScore('q4', 2)" class="btn-score-q4 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">2</button>
+                  <button type="button" onclick="setScore('q4', 3)" class="btn-score-q4 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">3</button>
+                  <button type="button" onclick="setScore('q4', 4)" class="btn-score-q4 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">4</button>
+                  <button type="button" onclick="setScore('q4', 5)" class="btn-score-q4 w-8 h-8 rounded-lg font-bold border-blue-600 bg-blue-600 text-white shadow-xs text-xs">5</button>
+                </div>
+                <span class="text-[10px] text-emerald-600 font-bold">Sangat Setuju</span>
+                <input type="hidden" id="val_q4" value="5">
+              </div>
+            </div>
+
+            <!-- Soalan 5: Minat Penggunaan & Replikasi -->
+            <div class="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+              <div class="flex items-start space-x-2">
+                <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded text-[11px]">5</span>
+                <p class="font-semibold text-slate-800 leading-snug">
+                  <strong>Saya sangat berminat</strong> menggunakan sistem ini di sekolah saya / berminat jika sistem seumpama ini diadaptasi untuk mata pelajaran yang saya ajar.
+                </p>
+              </div>
+              <div class="flex justify-between items-center pt-1 max-w-xs mx-auto">
+                <span class="text-[10px] text-slate-400">Tidak Setuju</span>
+                <div class="flex space-x-1.5">
+                  <button type="button" onclick="setScore('q5', 1)" class="btn-score-q5 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">1</button>
+                  <button type="button" onclick="setScore('q5', 2)" class="btn-score-q5 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">2</button>
+                  <button type="button" onclick="setScore('q5', 3)" class="btn-score-q5 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">3</button>
+                  <button type="button" onclick="setScore('q5', 4)" class="btn-score-q5 w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-xs">4</button>
+                  <button type="button" onclick="setScore('q5', 5)" class="btn-score-q5 w-8 h-8 rounded-lg font-bold border-blue-600 bg-blue-600 text-white shadow-xs text-xs">5</button>
+                </div>
+                <span class="text-[10px] text-emerald-600 font-bold">Sangat Setuju</span>
+                <input type="hidden" id="val_q5" value="5">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Kad 3: Pilihan Ciri Paling Menarik & Catatan Tambahan -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+          <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-thumbs-up text-blue-600"></i>
+            <span>3. Ciri Yang Paling Menarik Minat Cikgu (Pilih 1 - 3)</span>
+          </h2>
+
+          <div class="flex flex-wrap gap-2 text-xs" id="quickTagsContainer">
+            <button type="button" onclick="toggleTag(this, '⏱️ Menjimatkan masa guru menanda')" class="tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400">
+              ⏱️ Menjimatkan Masa Guru Menanda
+            </button>
+            <button type="button" onclick="toggleTag(this, '🗂️ Pengurusan tugasan mudah dan sistematik')" class="tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400">
+              🗂️ Pengurusan Tugasan Mudah dan Sistematik
+            </button>
+            <button type="button" onclick="toggleTag(this, '💡 Butang latihan kendiri murid')" class="tag-btn px-3 py-1.5 rounded-full border border-blue-600 bg-blue-50 text-blue-700 font-bold">
+              💡 Butang Latihan Kendiri Murid
+            </button>
+            <button type="button" onclick="toggleTag(this, '👨‍🏫 Guru penentu akhir (HITL)')" class="tag-btn px-3 py-1.5 rounded-full border border-blue-600 bg-blue-50 text-blue-700 font-bold">
+              👨‍🏫 Guru Penentu Akhir (HITL)
+            </button>
+            <button type="button" onclick="toggleTag(this, '📄 Laporan PDF keseluruhan 1 klik')" class="tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400">
+              📄 Laporan PDF 1 Klik
+            </button>
+            <button type="button" onclick="toggleTag(this, '🎯 Cadangan intervensi bersasar')" class="tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400">
+              🎯 Cadangan Intervensi Pintar
+            </button>
+            <button type="button" onclick="toggleTag(this, '📚 Ikut skema rasmi STPM MPM')" class="tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400">
+              📚 Ikut Skema Rasmi STPM MPM
+            </button>
+          </div>
+
+          <!-- Ulasan Pilihan (Pendek Sahaja) -->
+          <div class="pt-2">
+            <label class="block font-semibold text-slate-700 mb-1 text-xs">Catatan / Cadangan Tambahan Cikgu <span class="text-slate-400 font-normal">(Pilihan)</span></label>
+            <input type="text" id="respComment" placeholder="Cth: Sistem sangat praktikal, wajar diperluaskan ke semua Pusat T6..." class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none">
+          </div>
+
+          <!-- Hasrat & Minat Penggunaan (Ketik Sekali) -->
+          <div class="mt-3 bg-emerald-50/80 border border-emerald-200 rounded-xl p-3">
+            <label class="flex items-start space-x-2.5 cursor-pointer">
+              <input type="checkbox" id="respEndorsement" checked class="mt-0.5 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+              <span class="text-xs font-semibold text-emerald-950 leading-relaxed">
+                "Saya menyokong dan berminat menggunakan sistem ini andai diberikan peluang."
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Butang Hantar Super Mudah -->
+        <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-paper-plane text-sm"></i>
+          <span id="submitButtonText">Hantar Maklum Balas Cikgu (1 Klik)</span>
+        </button>
+
+      </form>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: PAPAN PEMUKA ANALITIK LIVE & RUMUSAN BUKTI JPNS -->
+    <!-- ========================================================================= -->
+    <section id="sectionAnalytics" class="space-y-4 hidden">
+      
+      <!-- Kad Papan Atas -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Khas Penyelidik & Guru Pembina</span>
+          <h2 class="text-base sm:text-lg font-black text-slate-800 mt-1">Dapatan Soal Selidik e-HisChecker dalam PdP</h2>
+          <p class="text-[11px] text-slate-500">Bahan bukti penerimaan & sokongan rasmi laporan Anugerah Guru Inovatif JPNS 2027.</p>
+        </div>
+
+        <div class="flex items-center space-x-2 w-full sm:w-auto no-print">
+          <button type="button" onclick="lockAnalytics()" title="Log keluar daripada Dapatan Live" class="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition flex items-center space-x-1 border border-red-200">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Log Keluar</span>
+          </button>
+          <button type="button" onclick="printAnalytics()" class="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900 transition flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-print"></i>
+            <span>Cetak PDF</span>
+          </button>
+          <button onclick="copyProofSummary()" class="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-copy"></i>
+            <span>Salin Rumusan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Kad Metrik Pantas -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-xs text-slate-500 font-semibold">Responden Guru</div>
+          <div class="text-2xl font-black text-slate-900 mt-0.5" id="statTotalResp">0</div>
+          <div class="text-[10px] text-blue-600 font-medium mt-0.5">Pendidik & Pentadbir</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-xs text-slate-500 font-semibold">Kadar Persetujuan</div>
+          <div class="text-2xl font-black text-emerald-600 mt-0.5" id="statAgreementRate">0%</div>
+          <div class="text-[10px] text-emerald-700 font-medium mt-0.5">Skor 4 & 5 (Positif)</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-xs text-slate-500 font-semibold">Purata Skor Min</div>
+          <div class="text-2xl font-black text-amber-600 mt-0.5" id="statMeanScore">0.00</div>
+          <div class="text-[10px] text-slate-400 font-medium mt-0.5">daripada skala 5.0</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-xs text-slate-500 font-semibold">Minat Penggunaan</div>
+          <div class="text-2xl font-black text-indigo-600 mt-0.5" id="statEndorsementRate">0%</div>
+          <div class="text-[10px] text-indigo-700 font-medium mt-0.5">Berminat Mengguna</div>
+        </div>
+      </div>
+
+      <!-- Rumusan dapatan yang dijana secara automatik -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wide">
+            <i class="fa-solid fa-file-lines mr-1"></i> Rumusan Dapatan Maklum Balas Pengguna
+          </span>
+          <button onclick="copyProofSummary()" class="text-xs text-blue-700 font-bold hover:underline no-print">
+            Salin Teks
+          </button>
+        </div>
+        <p class="text-xs text-slate-700 leading-relaxed italic bg-white p-3 rounded-xl border border-blue-100" id="proofTextSnippet">
+          Memuatkan ringkasan...
+        </p>
+      </div>
+
+      <!-- Jadual Analisis 5 Dimensi Penilaian -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+          Analisis 5 Aspek Penilaian Utama (Skor Min & Persetujuan)
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <th class="py-2 px-2.5 font-bold w-8 text-center">No</th>
+                <th class="py-2 px-2.5 font-bold">Fokus Penilaian Standard</th>
+                <th class="py-2 px-2.5 font-bold text-center w-20">Skor Min</th>
+                <th class="py-2 px-2.5 font-bold text-center w-28">Persetujuan</th>
+              </tr>
+            </thead>
+            <tbody id="tableBodyAnalytics" class="divide-y divide-slate-100">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Maklum Balas & Testimoni Terpilih Responden -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+          Senarai Maklum Balas & Testimoni Guru Peserta Taklimat
+        </h3>
+        <div class="space-y-2.5" id="testimonialsList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal Kejayaan Hantar Borang -->
+  <div id="successModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 text-center space-y-3 shadow-2xl">
+      <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-2xl">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">Terima Kasih, Cikgu!</h3>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Maklum balas dan sokongan Cikgu telah berjaya direkodkan secara selamat ke dalam pangkalan data analitik e-HisChecker.
+      </p>
+      <div class="pt-1">
+        <button onclick="closeSuccessModal()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+          Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Kata Laluan Akses Guru (Dapatan Live) -->
+  <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center space-y-3 shadow-2xl border border-slate-200">
+      <div class="w-11 h-11 rounded-full bg-amber-100 text-amber-600 mx-auto flex items-center justify-center text-xl">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">Akses Khas Guru Penyelidik</h3>
+        <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
+          Dapatan analitik dilindungi untuk privasi data responden. Sila log masuk menggunakan akaun guru Firebase.
+        </p>
+      </div>
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+        <div>
+          <input type="email" id="adminEmailInput" placeholder="E-mel guru Firebase" autocomplete="username" required class="w-full px-3 py-2 text-center text-sm font-sans rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none mb-2">
+          <input type="password" id="adminPasswordInput" placeholder="Kata laluan" autocomplete="current-password" required class="w-full px-3 py-2 text-center text-sm font-sans rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <p id="pinErrorMsg" class="text-[10px] text-red-500 mt-1 hidden font-semibold">E-mel atau kata laluan tidak tepat.</p>
+        </div>
+        <div class="flex space-x-2">
+          <button type="button" onclick="closeAuthModal()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+            Batal
+          </button>
+          <button type="submit" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-xs">
+            Buka
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Box -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl z-50 text-xs flex items-center space-x-2 transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMessage">Teks berjaya disalin!</span>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 py-3 text-center text-[11px] text-slate-400 no-print">
+    e-HisChecker Cikgu Liza © Kolej Tun Datu Tuanku Haji Bujang, Miri.
+  </footer>
+
+  <!-- Logik JavaScript -->
+  <script>
+    /* Konfigurasi projek Firebase e-HisChecker */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnFT5Zzs7hYh4GdSnI2vpgSNLQ8UGuqZc",
+      authDomain: "maklumbalas-e-hischecker.firebaseapp.com",
+      projectId: "maklumbalas-e-hischecker",
+      storageBucket: "maklumbalas-e-hischecker.firebasestorage.app",
+      messagingSenderId: "279599721253",
+      appId: "1:279599721253:web:2a75fdf707568f150408cc",
+      measurementId: "G-BJ6FRKDJHK"
+    };
+    const FIRESTORE_COLLECTION = "surveyResponses";
+    const firebaseConfigured = !Object.values(firebaseConfig).some(value => String(value).includes("GANTI_"));
+    let db = null;
+    let auth = null;
+    let unsubscribeSurvey = null;
+    if (firebaseConfigured) {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      auth = firebase.auth();
+    }
+
+    // 5 Soalan Teras Penilaian
+    const questionsMeta = [
+      { id: "q1", title: "Pematuhan Standard STPM (Struktur & Esei)", desc: "Menepati format sebenar peperiksaan Sejarah STPM MPM" },
+      { id: "q2", title: "Ciri Butang Khas Latihan Kendiri Murid", desc: "Ruang murid isi soalan/jawapan & terima semakan AI serta-merta" },
+      { id: "q3", title: "Mod Tugasan Guru & Human-in-the-Loop", desc: "Guru hantar tugasan, AI semak awal, guru sahkan markah, jimat >50%" },
+      { id: "q4", title: "Laporan PDF 1 Klik & Cadangan Intervensi", desc: "Kemudahan muat turun analitik keseluruhan & intervensi pintar" },
+      { id: "q5", title: "Minat Penggunaan & Replikasi Subjek Lain", desc: "Berminat menggunakan di sekolah / adaptasi untuk subjek lain" }
+    ];
+
+    // Tiada data contoh. Semua dapatan datang daripada respons sebenar Firebase.
+    const defaultData = [];
+
+    let surveyData = [];
+    let selectedTags = ["💡 Butang latihan kendiri murid", "👨‍🏫 Guru penentu akhir (HITL)"];
+    let isTeacherAuthenticated = false;
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      })[char]);
+    }
+
+    function toggleCustomEvent(show) {
+      const input = document.getElementById('respCustomEvent');
+      if (show) {
+        input.classList.remove('hidden');
+        input.focus();
+      } else {
+        input.classList.add('hidden');
+      }
+    }
+
+    function handleEventChange(eventName) {
+      toggleCustomEvent(eventName === 'Lain-lain');
+      const patLevelSection = document.getElementById('patLevelSection');
+      if (patLevelSection) {
+        patLevelSection.classList.toggle('hidden', eventName !== 'Program PAT');
+      }
+    }
+
+    function init() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('respDate');
+      if (dateInput) dateInput.value = todayStr;
+
+      if (firebaseConfigured) {
+        auth.onAuthStateChanged(user => {
+          isTeacherAuthenticated = Boolean(user);
+          const lockIcon = document.getElementById('lockIconTab');
+          if (lockIcon) lockIcon.className = user
+              ? "fa-solid fa-lock-open text-emerald-500"
+              : "fa-solid fa-lock text-amber-500";
+
+          if (unsubscribeSurvey) {
+            unsubscribeSurvey();
+            unsubscribeSurvey = null;
+          }
+          if (user) {
+            unsubscribeSurvey = db.collection(FIRESTORE_COLLECTION).orderBy('submittedAt', 'desc')
+              .onSnapshot(snapshot => {
+                const onlineData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), isFirestoreRecord: true }));
+                surveyData = [...defaultData, ...onlineData];
+                updateAnalyticsView();
+              }, error => {
+                console.error('Ralat membaca Firestore:', error);
+                showToast("Data Firebase tidak dapat dibaca. Semak Firestore Rules.");
+              });
+          } else {
+            surveyData = defaultData;
+            updateAnalyticsView();
+          }
+        });
+        surveyData = defaultData;
+        updateAnalyticsView();
+        return;
+      }
+
+      // Mod ujian tempatan sehingga firebaseConfig dilengkapkan.
+      const stored = localStorage.getItem('ehischecker_quick_surveys');
+      if (stored) {
+        try {
+          surveyData = JSON.parse(stored);
+        } catch(e) {
+          surveyData = defaultData;
+        }
+      } else {
+        surveyData = defaultData;
+        localStorage.setItem('ehischecker_quick_surveys', JSON.stringify(surveyData));
+      }
+
+      updateAnalyticsView();
+      setTimeout(() => showToast("Mod ujian: lengkapkan firebaseConfig untuk simpanan dalam talian."), 500);
+    }
+
+    function setScore(qId, score) {
+      document.getElementById(`val_${qId}`).value = score;
+      const btns = document.querySelectorAll(`.btn-score-${qId}`);
+      btns.forEach((btn, idx) => {
+        const val = idx + 1;
+        if (val === score) {
+          btn.className = `btn-score-${qId} w-8 h-8 rounded-lg font-bold border-blue-600 bg-blue-600 text-white shadow-xs text-xs`;
+        } else {
+          btn.className = `btn-score-${qId} w-8 h-8 rounded-lg font-bold border border-slate-300 bg-white hover:border-blue-500 text-slate-700 text-xs`;
+        }
+      });
+    }
+
+    function toggleTag(btn, tagName) {
+      const idx = selectedTags.indexOf(tagName);
+      if (idx > -1) {
+        selectedTags.splice(idx, 1);
+        btn.className = "tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400";
+      } else {
+        if (selectedTags.length >= 3) {
+          showToast("Maksimum 3 ciri sahaja dipilih.");
+          return;
+        }
+        selectedTags.push(tagName);
+        btn.className = "tag-btn px-3 py-1.5 rounded-full border border-blue-600 bg-blue-50 text-blue-700 font-bold";
+      }
+    }
+
+    async function handleQuickSubmit(e) {
+      e.preventDefault();
+
+      const submitButton = e.submitter || e.target.querySelector('button[type="submit"]');
+      const submitLabel = document.getElementById('submitButtonText');
+      if (submitButton) submitButton.disabled = true;
+      if (submitLabel) submitLabel.innerText = "Sedang menghantar...";
+
+      const name = document.getElementById('respName').value.trim();
+      const school = document.getElementById('respSchool').value.trim();
+      const inputDate = document.getElementById('respDate').value || new Date().toISOString().split('T')[0];
+      const district = document.getElementById('respDistrict').value || "Miri";
+      
+      const eventElem = document.querySelector('input[name="respEvent"]:checked');
+      let eventName = eventElem ? eventElem.value : "Program PAT";
+      const patLevelElem = document.querySelector('input[name="patLevel"]:checked');
+      const eventLevel = eventName === "Program PAT" && patLevelElem ? patLevelElem.value : "";
+
+      if (eventName === "Lain-lain") {
+        const customVal = document.getElementById('respCustomEvent').value.trim();
+        eventName = customVal || "Sesi Pameran Inovasi";
+      }
+
+      const roleElem = document.querySelector('input[name="respRole"]:checked');
+      const role = roleElem ? roleElem.value : "Guru Sejarah T6";
+      const comment = document.getElementById('respComment').value.trim();
+      const endorsed = document.getElementById('respEndorsement').checked;
+
+      const scores = {
+        q1: parseInt(document.getElementById('val_q1').value),
+        q2: parseInt(document.getElementById('val_q2').value),
+        q3: parseInt(document.getElementById('val_q3').value),
+        q4: parseInt(document.getElementById('val_q4').value),
+        q5: parseInt(document.getElementById('val_q5').value),
+      };
+
+      const newEntry = {
+        id: "resp-" + Date.now(),
+        name,
+        school: school || "Sekolah Peserta",
+        event: eventName,
+        eventLevel,
+        district: district,
+        state: "Sarawak",
+        role,
+        scores,
+        tags: [...selectedTags],
+        comment: comment || (selectedTags.length ? selectedTags.join(", ") : "Sangat berfaedah dan praktikal untuk Tingkatan Enam."),
+        endorsed,
+        date: inputDate
+      };
+
+      try {
+        if (firebaseConfigured) {
+          const { id, ...entryData } = newEntry;
+          await db.collection(FIRESTORE_COLLECTION).add({
+            ...entryData,
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            schemaVersion: 1
+          });
+        } else {
+          surveyData.push(newEntry);
+          localStorage.setItem('ehischecker_quick_surveys', JSON.stringify(surveyData));
+          updateAnalyticsView();
+        }
+
+        document.getElementById('fastSurveyForm').reset();
+        document.getElementById('respDate').value = new Date().toISOString().split('T')[0];
+        handleEventChange('Program PAT');
+        selectedTags = [];
+        document.querySelectorAll('.tag-btn').forEach(btn => {
+          btn.className = "tag-btn px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:border-blue-400";
+        });
+        ['q1','q2','q3','q4','q5'].forEach(q => setScore(q, 5));
+        document.getElementById('successModal').classList.remove('hidden');
+      } catch (error) {
+        console.error('Ralat menyimpan respons:', error);
+        showToast("Maklum balas gagal dihantar. Semak internet atau Firestore Rules.");
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+        if (submitLabel) submitLabel.innerText = "Hantar Maklum Balas Cikgu (1 Klik)";
+      }
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').classList.add('hidden');
+      switchTab('form');
+    }
+
+    function requestAnalyticsAccess() {
+      if (isTeacherAuthenticated) {
+        switchTab('analytics');
+      } else {
+        if (!firebaseConfigured) {
+          showToast("Lengkapkan firebaseConfig terlebih dahulu.");
+          return;
+        }
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('pinErrorMsg').classList.add('hidden');
+        document.getElementById('adminAuthModal').classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('adminEmailInput').focus();
+        }, 100);
+      }
+    }
+
+    function closeAuthModal() {
+      document.getElementById('adminAuthModal').classList.add('hidden');
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmailInput').value.trim();
+      const password = document.getElementById('adminPasswordInput').value;
+      const errorMessage = document.getElementById('pinErrorMsg');
+      errorMessage.classList.add('hidden');
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        isTeacherAuthenticated = true;
+        closeAuthModal();
+        const lockIcon = document.getElementById('lockIconTab');
+        if (lockIcon) {
+          lockIcon.className = "fa-solid fa-lock-open text-emerald-500";
+        }
+        showToast("Akses guru disahkan.");
+        switchTab('analytics');
+      } catch (error) {
+        console.error('Ralat log masuk:', error);
+        errorMessage.classList.remove('hidden');
+        document.getElementById('adminPasswordInput').focus();
+      }
+    }
+
+    async function lockAnalytics() {
+      if (auth) await auth.signOut();
+      isTeacherAuthenticated = false;
+      const lockIcon = document.getElementById('lockIconTab');
+      if (lockIcon) {
+        lockIcon.className = "fa-solid fa-lock text-amber-500";
+      }
+      showToast("Guru berjaya log keluar. Dapatan Live telah dikunci.");
+      switchTab('form');
+    }
+
+    function switchTab(tab) {
+      const secForm = document.getElementById('sectionForm');
+      const secAnalytics = document.getElementById('sectionAnalytics');
+      const btnForm = document.getElementById('btnTabForm');
+      const btnAnalytics = document.getElementById('btnTabAnalytics');
+
+      if (tab === 'form') {
+        secForm.classList.remove('hidden');
+        secAnalytics.classList.add('hidden');
+        btnForm.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-xs flex items-center space-x-1.5";
+        btnAnalytics.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center space-x-1.5";
+      } else {
+        if (!isTeacherAuthenticated) {
+          requestAnalyticsAccess();
+          return;
+        }
+        secForm.classList.add('hidden');
+        secAnalytics.classList.remove('hidden');
+        btnAnalytics.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-xs flex items-center space-x-1.5";
+        btnForm.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center space-x-1.5";
+        updateAnalyticsView();
+      }
+    }
+
+    function updateAnalyticsView() {
+      const total = surveyData.length;
+      document.getElementById('badgeCount').innerText = total;
+      document.getElementById('statTotalResp').innerText = total;
+
+      if (total === 0) {
+        document.getElementById('statMeanScore').innerText = '0.00';
+        document.getElementById('statAgreementRate').innerText = '0%';
+        document.getElementById('statEndorsementRate').innerText = '0%';
+        document.getElementById('proofTextSnippet').innerText = 'Belum ada maklum balas diterima. Rumusan dapatan akan dijana secara automatik selepas responden menghantar borang.';
+        document.getElementById('tableBodyAnalytics').innerHTML = `
+          <tr><td colspan="4" class="py-6 px-3 text-center text-slate-400">Belum ada data untuk dianalisis.</td></tr>`;
+        document.getElementById('testimonialsList').innerHTML = `
+          <div class="py-8 text-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400">
+            <i class="fa-regular fa-comments text-2xl mb-2"></i>
+            <p class="text-xs font-semibold">Belum ada maklum balas atau testimoni diterima.</p>
+          </div>`;
+        return;
+      }
+
+      let grandTotalScore = 0;
+      let countAgree = 0;
+      let totalQuestions = total * 5;
+      let totalEndorsements = 0;
+
+      const qSums = { q1:0, q2:0, q3:0, q4:0, q5:0 };
+      const qHighs = { q1:0, q2:0, q3:0, q4:0, q5:0 };
+
+      const eventsRecorded = new Set();
+
+      surveyData.forEach(r => {
+        if (r.event) eventsRecorded.add(r.eventLevel ? `${r.event} Peringkat ${r.eventLevel}` : r.event);
+        if (r.endorsed) totalEndorsements++;
+        ['q1','q2','q3','q4','q5'].forEach(qKey => {
+          const sc = r.scores[qKey] || 5;
+          qSums[qKey] += sc;
+          grandTotalScore += sc;
+          if (sc >= 4) {
+            qHighs[qKey]++;
+            countAgree++;
+          }
+        });
+      });
+
+      const overallMean = (grandTotalScore / totalQuestions).toFixed(2);
+      const overallAgreePct = ((countAgree / totalQuestions) * 100).toFixed(1);
+      const endorsePct = ((totalEndorsements / total) * 100).toFixed(0);
+
+      document.getElementById('statMeanScore').innerText = overallMean;
+      document.getElementById('statAgreementRate').innerText = `${overallAgreePct}%`;
+      document.getElementById('statEndorsementRate').innerText = `${endorsePct}%`;
+
+      const eventsSummaryText = Array.from(eventsRecorded).join(", ") || "Program PAT dan Sesi PLC";
+
+      // Rumusan dapatan automatik untuk dimasukkan dalam laporan inovasi
+      const snippet = `Berdasarkan instrumen maklum balas yang dijawab oleh ${total} orang guru dan pentadbir dalam ${eventsSummaryText}, sebanyak ${overallAgreePct}% penilaian berada pada tahap positif, iaitu skor 4 dan 5, dengan skor min keseluruhan ${overallMean} daripada 5.00. Selain itu, ${endorsePct}% responden menyatakan minat untuk menggunakan e-HisChecker sekiranya diberikan peluang. Dapatan ini menunjukkan bahawa sistem tersebut diterima dengan baik serta berpotensi membantu menjimatkan masa pemarkahan dan memudahkan pengurusan tugasan, pentaksiran dan analisis prestasi murid. Persepsi berkaitan penjimatan masa perlu disokong dengan rekod perbandingan masa pemarkahan.`;
+      document.getElementById('proofTextSnippet').innerText = snippet;
+
+      // Render Jadual 5 Dimensi
+      const tbody = document.getElementById('tableBodyAnalytics');
+      tbody.innerHTML = '';
+      questionsMeta.forEach((q, idx) => {
+        const mean = (qSums[q.id] / total).toFixed(2);
+        const pct = ((qHighs[q.id] / total) * 100).toFixed(1);
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="py-2 px-2.5 font-bold text-center text-blue-700">${idx+1}</td>
+          <td class="py-2 px-2.5">
+            <div class="font-bold text-slate-800">${q.title}</div>
+            <div class="text-[11px] text-slate-400">${q.desc}</div>
+          </td>
+          <td class="py-2 px-2.5 font-bold text-center text-slate-900">${mean}</td>
+          <td class="py-2 px-2.5 text-center">
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+              ${pct}%
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Render Senarai Ulasan Responden
+      const list = document.getElementById('testimonialsList');
+      list.innerHTML = '';
+      surveyData.slice().reverse().forEach(r => {
+        const item = document.createElement('div');
+        item.className = "p-3 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1.5";
+        const tagsHtml = (r.tags || []).map(t => `<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-semibold">${escapeHtml(t)}</span>`).join(' ');
+        const eventDisplay = r.eventLevel ? `${r.event} • Peringkat ${r.eventLevel}` : r.event;
+        const eventTag = eventDisplay ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200">${escapeHtml(eventDisplay)}</span>` : '';
+        const dateDisplay = r.date ? `<span class="text-[10px] text-slate-400 font-medium flex items-center gap-1"><i class="fa-regular fa-calendar"></i>${escapeHtml(r.date)}</span>` : '';
+        const locDisplay = r.district ? `<span class="text-[10px] text-slate-400">• Daerah ${escapeHtml(r.district)}</span>` : '';
+        const deleteButton = r.isFirestoreRecord && isTeacherAuthenticated
+          ? `<button type="button" onclick="deleteResponse('${r.id}')" class="ml-1 px-2 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 font-bold text-[10px]" title="Padam respons ini"><i class="fa-solid fa-trash-can mr-1"></i>Padam</button>`
+          : '';
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-bold text-xs text-slate-800">${escapeHtml(r.name)}</span>
+              <span class="text-[11px] text-slate-500">• ${escapeHtml(r.school)} ${locDisplay} (${escapeHtml(r.role)})</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              ${dateDisplay}
+              ${eventTag}
+              <span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                ${r.endorsed ? 'Berminat Mengguna' : 'Maklum Balas'}
+              </span>
+              ${deleteButton}
+            </div>
+          </div>
+          <p class="text-xs text-slate-700 italic">"${escapeHtml(r.comment)}"</p>
+          <div class="flex flex-wrap gap-1 pt-1">${tagsHtml}</div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    async function deleteResponse(responseId) {
+      if (!firebaseConfigured || !isTeacherAuthenticated || !auth.currentUser) {
+        showToast("Sila log masuk sebagai guru untuk memadam respons.");
+        return;
+      }
+
+      const response = surveyData.find(item => item.id === responseId && item.isFirestoreRecord);
+      if (!response) {
+        showToast("Respons tidak ditemui atau bukan rekod Firebase.");
+        return;
+      }
+
+      const respondentName = response.name || "responden ini";
+      const confirmed = window.confirm(`Padam maklum balas daripada ${respondentName}? Tindakan ini tidak boleh dibatalkan.`);
+      if (!confirmed) return;
+
+      try {
+        await db.collection(FIRESTORE_COLLECTION).doc(responseId).delete();
+        showToast("Respons berjaya dipadam.");
+      } catch (error) {
+        console.error('Ralat memadam respons:', error);
+        showToast("Respons gagal dipadam. Semak Firestore Rules.");
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const label = document.getElementById('toastMessage');
+      if (!toast || !label) return;
+      label.innerText = msg;
+      toast.classList.remove('translate-y-16', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-16', 'opacity-0');
+      }, 2500);
+    }
+
+    function copyProofSummary() {
+      const text = document.getElementById('proofTextSnippet').innerText;
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast("Rumusan teks berjaya disalin ke papan klip!");
+      } catch(err) {
+        showToast("Gagal menyalin teks.");
+      }
+    }
+
+    function printAnalytics() {
+      if (!isTeacherAuthenticated) {
+        showToast("Sila log masuk sebagai guru sebelum mencetak dapatan.");
+        return;
+      }
+      const originalTitle = document.title;
+      const today = new Date().toLocaleDateString('ms-MY').replaceAll('/', '-');
+      document.title = `Dapatan-e-HisChecker-${today}`;
+      window.print();
+      setTimeout(() => { document.title = originalTitle; }, 500);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
